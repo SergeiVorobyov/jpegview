@@ -4,6 +4,7 @@
 #include <float.h>
 #include <shlobj.h>
 #include <algorithm>
+#include "LepLoader.h"
 
 static const TCHAR* DEFAULT_INI_FILE_NAME = _T("JPEGView.ini");
 static const TCHAR* SECTION_NAME = _T("JPEGView");
@@ -177,9 +178,9 @@ CSettingsProvider::CSettingsProvider(void) {
 	m_nWEBPSaveQuality = GetInt(_T("WEBPSaveQuality"), 85, 0, 100);
 	m_sDefaultSaveFormat = GetString(_T("DefaultSaveFormat"), _T("jpg"));
 	m_sFilesProcessedByWIC = GetString(_T("FilesProcessedByWIC"), _T("*.wdp;*.mdp;*.hdp"));
-	m_sFilesProcessedByLepton = GetString(_T("FilesProcessedByLepton"), _T("*.lep"));
-	m_sLeptonToolName = GetString(_T("LeptonToolName"), _T("lepton-avx.exe"));
-	m_sLeptonToolExtraArgs = GetString(_T("LeptonToolExtraArgs"), _T("-allowprogressive -memory=1024M -threadmemory=128M"));
+	m_sFilesProcessedByLepton = GetString(_T("FilesProcessedByLepton"), LepLoader::DefultFilesProcessedByLepton());
+	m_sLeptonToolName = GetString(_T("LeptonToolName"), LepLoader::DefultLeptonToolName());
+	m_sLeptonToolExtraArgs = GetString(_T("LeptonToolExtraArgs"), LepLoader::DefultLeptonToolExtraArgs());
 	m_sFileEndingsRAW = GetString(_T("FileEndingsRAW"), _T("*.pef;*.dng;*.crw;*.nef;*.cr2;*.mrw;*.rw2;*.orf;*.x3f;*.arw;*.kdc;*.nrw;*.dcr;*.sr2;*.raf"));
 	m_bCreateParamDBEntryOnSave = GetBool(_T("CreateParamDBEntryOnSave"), true);
 	m_bWrapAroundFolder = GetBool(_T("WrapAroundFolder"), true);

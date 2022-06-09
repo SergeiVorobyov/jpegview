@@ -21,6 +21,7 @@
 #include "QOIWrapper.h"
 #include "MaxImageDef.h"
 #include "LepLoader.h"
+#include <atlfile.h>
 
 
 using namespace Gdiplus;
@@ -1031,9 +1032,6 @@ void CImageLoadThread::ProcessReadGDIPlusRequest(CRequest * request) {
 }
 
 void CImageLoadThread::ProcessReadLeptonRequest(CRequest* request) {
-	static const CString space(_T(" "));
-	static const CString quote(_T("\""));
-
 	// Convert the Lepton image into a temporary JPEG file and read then as a regular JPEG file.
 	CString guid(Helpers::GetGuidString());
 	guid.Replace(_T("-"), _T(""));
@@ -1041,36 +1039,26 @@ void CImageLoadThread::ProcessReadLeptonRequest(CRequest* request) {
 	guid.Replace(_T("}"), _T(""));
 
 	CString tempFile = Helpers::GetTempPath() + CW2T(guid);
-	CString sCommandLine = CSettingsProvider::This().LeptonToolExtraArgs();
-	if (!sCommandLine.IsEmpty())
-		sCommandLine += space;
 
-	sCommandLine += quote + request->FileName + quote + space + quote + tempFile + quote;
-
-	STARTUPINFO si = { 0 };
-	si.cb = sizeof(STARTUPINFO);
-	si.dwFlags = STARTF_UNTRUSTEDSOURCE;
-	PROCESS_INFORMATION pi = { 0 };
-	if (!::CreateProcess(LepLoader::GetToolPath(), sCommandLine.GetBuffer(),
-		NULL, NULL, FALSE, CREATE_UNICODE_ENVIRONMENT|CREATE_NO_WINDOW, NULL, NULL, &si, &pi)) {
-		sCommandLine.ReleaseBuffer();
+	// Open a temporary file for storing a resulting JPEG.
+	// There is no needs to explicitly delete this temporary file as it will be closed
+	// as the system closes its handle (due to FILE_FLAG_DELETE_ON_CLOSE flag).
+	CAtlFile outFile;
+	if (FAILED(outFile.Create(tempFile,
+		GENERIC_WRITE,
+		FILE_SHARE_READ | FILE_SHARE_DELETE,
+		CREATE_ALWAYS,
+		FILE_ATTRIBUTE_NOT_CONTENT_INDEXED | FILE_ATTRIBUTE_TEMPORARY | FILE_FLAG_DELETE_ON_CLOSE))
+		|| !LepLoader::Process(request->FileName, outFile))
+	{
 		request->Image = NULL;
 		request->OutOfMemory = request->Image == NULL;
 		return;
 	}
 
-	sCommandLine.ReleaseBuffer();
-	::WaitForSingleObject(pi.hProcess, INFINITE);
-
-	::CloseHandle(pi.hProcess);
-	::CloseHandle(pi.hThread);
-
 	// Pass the temporary JPEG file to the routine, but specify the temp file path
 	// instead of requested LEP file.
 	ProcessReadJPEGRequest(request, tempFile);
-
-	// Delete the temporary file as it is not needed anymore.
-	::DeleteFile(tempFile);
 }
 
 static unsigned char* alloc(int sizeInBytes) {
