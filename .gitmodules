@@ -35,6 +35,6 @@
 [submodule "extras/third_party/Little-CMS"]
 	path = extras/third_party/Little-CMS
 	url = https://github.com/mm2/Little-CMS
-[submodule "deps/brunsli"]
-	path = deps/brunsli
+[submodule "extras/third_party/brunsli"]
+	path = extras/third_party/brunsli
 	url = git@github.com:google/brunsli.git
