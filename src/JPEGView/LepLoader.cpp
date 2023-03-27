@@ -74,7 +74,7 @@ bool LepLoader::Process(const CString& path, const CHandle& outFile)
 		sCommandLine += space;
 
 	sCommandLine += space + outFileName;
-
+/*
 	HANDLE console;
 
 	AllocConsole();
@@ -88,13 +88,13 @@ bool LepLoader::Process(const CString& path, const CHandle& outFile)
 		Flags,
 		NULL
 	);
-
+*/
 
 	STARTUPINFO si = { 0 };
 	si.cb = sizeof(STARTUPINFO);
 	si.hStdInput = inPipeRead;
-	si.hStdOutput = console; // outPipeWrite;
-	si.hStdError = console; // outPipeWrite;
+	si.hStdOutput = outPipeWrite;
+	si.hStdError = outPipeWrite;
 	si.dwFlags = /*STARTF_UNTRUSTEDSOURCE | */ STARTF_USESTDHANDLES;
 	PROCESS_INFORMATION pi = { 0 };
 	if (!::CreateProcess(LepLoader::GetToolPath(), sCommandLine.GetBuffer(),
@@ -105,15 +105,15 @@ bool LepLoader::Process(const CString& path, const CHandle& outFile)
 
 	sCommandLine.ReleaseBuffer();
 
-	if (!WriteToPipe(in, inPipeWrite))
-		return false;
-
 	// Close handles to the stdin and stdout pipes no longer needed by the child process.
 	// If they are not explicitly closed, there is no way to recognize that the child process has ended.
-//	inPipeRead.Close();
+	inPipeRead.Close();
 
 	// Close the pipe handle so the child process stops reading.
-//	inPipeWrite.Close();
+	inPipeWrite.Close();
+
+	if (!WriteToPipe(in, inPipeWrite))
+		return false;
 
 	if (!ReadFromPipe(outPipeRead, outFile))
 		return false;
