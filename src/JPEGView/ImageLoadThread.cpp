@@ -20,7 +20,7 @@
 #include "WEBPWrapper.h"
 #include "QOIWrapper.h"
 #include "MaxImageDef.h"
-
+#include "brunsliWrapper.h"
 
 using namespace Gdiplus;
 
@@ -117,6 +117,8 @@ static EImageFormat GetImageFormat(LPCTSTR sFileName) {
 			memcmp(header + 8, "msf1", 4) == 0) {
 			return IF_HEIF;
 		}
+	} else if (header[0] == 0x0A && header[1] == 0x04 && header[2] == 'B' && header[3] == 0xD2 && header[4] == 0xD5 && header[5] == 'N') {
+		return IF_Brunsli;
 	} else if (header[0] == 'q' && header[1] == 'o' && header[2] == 'i' && header[3] == 'f') {
 		return IF_QOI;
 	}
@@ -390,6 +392,14 @@ void CImageLoadThread::ProcessRequest(CRequestBase& request) {
 			DeleteCachedJxlDecoder();
 			DeleteCachedAvifDecoder();
 			ProcessReadQOIRequest(&rq);
+			break;
+		case IF_Brunsli:
+			DeleteCachedGDIBitmap();
+			DeleteCachedWebpDecoder();
+			DeleteCachedPngDecoder();
+			DeleteCachedJxlDecoder();
+			DeleteCachedAvifDecoder();
+			ProcessReadBrunsliRequest(&rq);
 			break;
 		case IF_CameraRAW:
 			DeleteCachedGDIBitmap();
@@ -983,6 +993,48 @@ void CImageLoadThread::ProcessReadQOIRequest(CRequest* request) {
 		request->ExceptionError = true;
 	}
 	::CloseHandle(hFile);
+	delete[] pBuffer;
+}
+
+void CImageLoadThread::ProcessReadBrunsliRequest(CRequest* request) {
+	CAtlFile hFile;
+	if (FAILED(hFile.Create(request->FileName, GENERIC_READ, FILE_SHARE_READ, OPEN_EXISTING))) {
+		return;
+	}
+	char* pBuffer = NULL;
+	try {
+		ULONGLONG nFileSize = 0;
+		DWORD nNumBytesRead;
+		// Don't read too huge files
+		hFile.GetSize(nFileSize);
+		if (nFileSize > MAX_JPEG_FILE_SIZE) {
+			request->OutOfMemory = true;
+			return;
+		}
+
+		pBuffer = new(std::nothrow) char[nFileSize];
+		if (pBuffer == NULL) {
+			request->OutOfMemory = true;
+			return;
+		}
+		if (S_OK == hFile.Read(pBuffer, nFileSize, nNumBytesRead) && nNumBytesRead == nFileSize) {
+			int nWidth, nHeight, nBPP;
+			void* pPixelData = brunsliReaderWriter::ReadImage(nWidth, nHeight, nBPP, request->OutOfMemory, pBuffer, nFileSize);
+			if (pPixelData != NULL) {
+				if (nBPP == 4) {
+					// Multiply alpha value into each AABBGGRR pixel
+					uint32* pImage32 = (uint32*)pPixelData;
+					for (int i = 0; i < nWidth * nHeight; i++)
+						*pImage32++ = WebpAlphaBlendBackground(*pImage32, CSettingsProvider::This().ColorTransparency());
+				}
+				request->Image = new CJPEGImage(nWidth, nHeight, pPixelData, NULL, nBPP, 0, IF_Brunsli, false, 0, 1, 0);
+			}
+		}
+	} catch (...) {
+		delete request->Image;
+		request->Image = NULL;
+		request->ExceptionError = true;
+	}
 	delete[] pBuffer;
 }
 

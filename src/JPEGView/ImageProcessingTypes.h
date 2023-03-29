@@ -40,6 +40,7 @@ enum EImageFormat {
 	IF_HEIF,
 	IF_AVIF,
 	IF_QOI,
+	IF_Brunsli,
 	IF_WIC,
 	IF_CLIPBOARD,
 	IF_CameraRAW,

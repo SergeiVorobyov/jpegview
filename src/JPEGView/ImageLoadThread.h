@@ -116,6 +116,7 @@ private:
 	void ProcessReadAVIFRequest(CRequest* request);
 	void ProcessReadHEIFRequest(CRequest * request);
 	void ProcessReadQOIRequest(CRequest * request);
+	void ProcessReadBrunsliRequest(CRequest * request);
 	void ProcessReadRAWRequest(CRequest * request);
 	void ProcessReadGDIPlusRequest(CRequest * request);
 	void ProcessReadWICRequest(CRequest* request);
