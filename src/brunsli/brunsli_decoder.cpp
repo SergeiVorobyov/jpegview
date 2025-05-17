@@ -1,0 +1,10 @@
+#include <dec/ans_decode.cc>
+#include <dec/bit_reader.cc>
+#include <dec/brunsli_decode.cc>
+#include <dec/context_map_decode.cc>
+#include <dec/decode.cc>
+#include <dec/histogram_decode.cc>
+#include <dec/huffman_decode.cc>
+#include <dec/huffman_table.cc>
+#include <dec/jpeg_data_writer.cc>
+#include <dec/state.cc>

@@ -1,0 +1,6 @@
+EXPORTS
+GetMaximumBrunsliEncodedSize
+EstimateBrunsliEncodePeakMemoryUsage
+BrunsliEncodeJpeg
+GetBrunsliBypassSize
+BrunsliEncodeJpegBypass
