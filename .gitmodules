@@ -38,3 +38,6 @@
 [submodule "extras/third_party/brunsli"]
 	path = extras/third_party/brunsli
 	url = git@github.com:google/brunsli.git
+[submodule "extras/third_party/brotli"]
+	path = extras/third_party/brotli
+	url = git@github.com:google/brotli.git

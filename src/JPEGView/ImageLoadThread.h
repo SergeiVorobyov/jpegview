@@ -4,6 +4,7 @@
 #include "ProcessParams.h"
 #include "WorkThread.h"
 #include <gdiplus.h>
+#include "brunsliWrapper.h"
 
 class CJPEGImage;
 
@@ -98,6 +99,7 @@ private:
 	CString m_sLastPngFileName; // Only for animated PNG files
 	CString m_sLastJxlFileName; // Only for animated JPEG XL files
 	CString m_sLastAvifFileName; // Only for animated AVIF files
+	brunsliWrapper::brunsliLibraryWraper m_brunsli;
 
 	virtual void ProcessRequest(CRequestBase& request);
 	virtual void AfterFinishProcess(CRequestBase& request);

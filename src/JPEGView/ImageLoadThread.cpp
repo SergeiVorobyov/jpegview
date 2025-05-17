@@ -20,7 +20,6 @@
 #include "WEBPWrapper.h"
 #include "QOIWrapper.h"
 #include "MaxImageDef.h"
-#include "brunsliWrapper.h"
 
 using namespace Gdiplus;
 
@@ -117,7 +116,7 @@ static EImageFormat GetImageFormat(LPCTSTR sFileName) {
 			memcmp(header + 8, "msf1", 4) == 0) {
 			return IF_HEIF;
 		}
-	} else if (header[0] == 0x0A && header[1] == 0x04 && header[2] == 'B' && header[3] == 0xD2 && header[4] == 0xD5 && header[5] == 'N') {
+	} else if (brunsliWrapper::IsBrunsli(header, ARRAYSIZE(header))) {
 		return IF_Brunsli;
 	} else if (header[0] == 'q' && header[1] == 'o' && header[2] == 'i' && header[3] == 'f') {
 		return IF_QOI;
@@ -1001,8 +1000,12 @@ void CImageLoadThread::ProcessReadBrunsliRequest(CRequest* request) {
 	if (FAILED(hFile.Create(request->FileName, GENERIC_READ, FILE_SHARE_READ, OPEN_EXISTING))) {
 		return;
 	}
+	if (!m_brunsli.is_decoder_load() && !m_brunsli.load_decoder())
+		return;
+
 	char* pBuffer = NULL;
 	try {
+
 		ULONGLONG nFileSize = 0;
 		DWORD nNumBytesRead;
 		// Don't read too huge files
@@ -1019,7 +1022,7 @@ void CImageLoadThread::ProcessReadBrunsliRequest(CRequest* request) {
 		}
 		if (S_OK == hFile.Read(pBuffer, nFileSize, nNumBytesRead) && nNumBytesRead == nFileSize) {
 			int nWidth, nHeight, nBPP;
-			void* pPixelData = brunsliReaderWriter::ReadImage(nWidth, nHeight, nBPP, request->OutOfMemory, pBuffer, nFileSize);
+			void* pPixelData = m_brunsli.ReadImage(nWidth, nHeight, nBPP, request->OutOfMemory, pBuffer, nFileSize);
 			if (pPixelData != NULL) {
 				if (nBPP == 4) {
 					// Multiply alpha value into each AABBGGRR pixel
